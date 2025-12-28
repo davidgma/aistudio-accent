@@ -15,7 +15,9 @@
             "outputPath": {
               "base": "./docs",
               "browser": "."
-            },
+            },"assets": [
+              "src/CNAME"
+            ],
             "browser": "index.tsx",
             "tsConfig": "tsconfig.json"
           },
