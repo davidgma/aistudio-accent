@@ -1,0 +1,7 @@
+{
+  "name": "Voice Recorder",
+  "description": "An application to record your voice from the microphone and play it back instantly.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
