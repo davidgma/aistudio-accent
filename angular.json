@@ -16,7 +16,7 @@
               "base": "docs",
               "browser": "."
             },"assets": [
-              "src/CNAME"
+              "CNAME"
             ],
             "browser": "index.tsx",
             "tsConfig": "tsconfig.json"
