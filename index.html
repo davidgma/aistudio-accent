@@ -2,28 +2,367 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Voice Recorder</title>
-  <base href="./" />
+  <title>Voice Recorder Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙️</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
-<script type="importmap">
-{
-  "imports": {
-    "rxjs": "https://esm.sh/rxjs@^7.8.2?conditions=es2015",
-    "rxjs/operators": "https://esm.sh/rxjs@^7.8.2/operators?conditions=es2015",
-    "rxjs/ajax": "https://esm.sh/rxjs@^7.8.2/ajax?conditions=es2015",
-    "rxjs/webSocket": "https://esm.sh/rxjs@^7.8.2/webSocket?conditions=es2015",
-    "rxjs/testing": "https://esm.sh/rxjs@^7.8.2/testing?conditions=es2015",
-    "rxjs/fetch": "https://esm.sh/rxjs@^7.8.2/fetch?conditions=es2015",
-    "@angular/compiler": "https://esm.sh/@angular/compiler@^21.0.6?external=rxjs",
-    "@angular/platform-browser": "https://esm.sh/@angular/platform-browser@^21.0.6?external=rxjs",
-    "@angular/core": "https://esm.sh/@angular/core@^21.0.6?external=rxjs"
-  }
-}
-</script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #111827; /* bg-gray-900 */
+    }
+    
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .backdrop-blur-sm {
+      backdrop-filter: blur(4px);
+    }
+
+    .nav-item {
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      transition: all 0.3s;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+
+    .nav-item.active {
+      color: #ef4444 !important;
+      background-color: rgba(239, 68, 68, 0.1);
+      box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.3);
+    }
+
+    .nav-item:not(.active):hover {
+      background-color: #1f2937; /* bg-gray-800 */
+    }
+  </style>
 </head>
-<body class="bg-gray-900">
-  <app-root></app-root>
+<body class="bg-gray-900 text-white">
+  <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-md mx-auto">
+      
+      <!-- Navbar -->
+      <nav class="flex items-center justify-center space-x-6 mb-12 bg-gray-800/30 p-2 rounded-2xl border border-gray-700/50 backdrop-blur-sm">
+        <div id="nav-globe" class="nav-item active" title="Desktop/Android Mode">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+          </svg>
+        </div>
+        <div id="nav-apple" class="nav-item" title="iPad Mode">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.05 20.28c-.98.95-2.05 1.61-3.22 1.61-1.14 0-1.53-.67-2.83-.67-1.3 0-1.74.67-2.83.67-1.17 0-2.24-.66-3.22-1.61-2.02-1.96-3.5-5.68-3.5-8.86 0-3.18 1.48-6.9 3.5-8.86.98-.95 2.05-1.61 3.22-1.61 1.14 0 1.53.67 2.83.67 1.3 0 1.74-.67 2.83-.67 1.17 0 2.24.66 3.22 1.61 2.02 1.96 3.5 5.68 3.5 8.86 0 3.18-1.48 6.9-3.5 8.86zm-5.05-16.28c0-1.1.89-2 2-2s2 .9 2 2-.89 2-2 2-2-.9-2-2z"/>
+          </svg>
+        </div>
+      </nav>
+
+      <main id="main-recorder" class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl p-6 sm:p-8 border border-gray-700">
+        <!-- Display Area -->
+        <div id="display-area" class="h-32 flex items-center justify-center bg-gray-900 rounded-lg mb-8">
+          <p id="status-text" class="text-gray-500 text-lg">Ready to record</p>
+          <div id="recording-indicator" class="hidden flex items-center space-x-3">
+            <span class="relative flex h-4 w-4">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
+            </span>
+            <span id="timer-display" class="text-3xl font-mono tracking-wider text-red-400">00:00</span>
+          </div>
+          <audio id="audio-player" controls class="hidden w-full"></audio>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-alert" class="hidden bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg relative mb-6" role="alert">
+          <strong class="font-bold">Error: </strong>
+          <span id="error-text" class="block sm:inline"></span>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls-container" class="flex items-center justify-center space-x-4">
+          <!-- Record/Stop Button -->
+          <button id="record-btn" class="flex items-center justify-center w-20 h-20 rounded-full bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg focus:outline-none focus:ring-4 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 ease-in-out transform hover:scale-105">
+            <svg id="mic-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path></svg>
+            <svg id="stop-icon" class="hidden w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd"></path></svg>
+          </button>
+
+          <!-- Play/Stop Playback Button -->
+          <button id="play-btn" disabled class="flex items-center justify-center w-16 h-16 rounded-full bg-gray-700 text-cyan-400 hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-500">
+            <svg id="play-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+            <svg id="pause-icon" class="hidden h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+          </button>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script>
+    // State variables
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let audioStream = null;
+    let timerInterval = null;
+    let recordingTime = 0;
+    let isRecording = false;
+    let isPlaying = false;
+    let audioURL = null;
+    let currentMode = 'globe'; // 'globe' or 'apple'
+    let autoPlayAfterStop = false;
+
+    // Mode-specific state persistence
+    const modeStates = {
+      globe: { audioURL: null, recordingTime: 0 },
+      apple: { audioURL: null, recordingTime: 0 }
+    };
+
+    // DOM Elements
+    const recordBtn = document.getElementById('record-btn');
+    const playBtn = document.getElementById('play-btn');
+    const timerDisplay = document.getElementById('timer-display');
+    const statusText = document.getElementById('status-text');
+    const recordingIndicator = document.getElementById('recording-indicator');
+    const audioPlayer = document.getElementById('audio-player');
+    const errorAlert = document.getElementById('error-alert');
+    const errorText = document.getElementById('error-text');
+    const micIcon = document.getElementById('mic-icon');
+    const stopIcon = document.getElementById('stop-icon');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    const navGlobe = document.getElementById('nav-globe');
+    const navApple = document.getElementById('nav-apple');
+
+    // Helper: Format time
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Helper: Update UI state
+    function updateUI() {
+      // Record Button
+      if (isRecording) {
+        recordBtn.classList.remove('bg-cyan-500', 'hover:bg-cyan-600');
+        recordBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+        micIcon.classList.add('hidden');
+        stopIcon.classList.remove('hidden');
+      } else {
+        recordBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        recordBtn.classList.add('bg-cyan-500', 'hover:bg-cyan-600');
+        micIcon.classList.remove('hidden');
+        stopIcon.classList.add('hidden');
+      }
+
+      // Play Button
+      if (currentMode === 'globe') {
+        playBtn.disabled = !audioURL && !isRecording;
+      } else {
+        playBtn.disabled = !audioURL || isRecording;
+      }
+
+      if (isPlaying) {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+      } else {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+      }
+
+      // Display Area
+      if (isRecording) {
+        statusText.classList.add('hidden');
+        recordingIndicator.classList.remove('hidden');
+        audioPlayer.classList.add('hidden');
+      } else if (audioURL) {
+        statusText.classList.add('hidden');
+        recordingIndicator.classList.add('hidden');
+        audioPlayer.classList.remove('hidden');
+        if (audioPlayer.src !== audioURL) {
+          audioPlayer.src = audioURL;
+        }
+      } else {
+        statusText.classList.remove('hidden');
+        recordingIndicator.classList.add('hidden');
+        audioPlayer.classList.add('hidden');
+        statusText.textContent = 'Ready to record';
+      }
+    }
+
+    // Timer functions
+    function startTimer() {
+      recordingTime = 0;
+      timerDisplay.textContent = '00:00';
+      timerInterval = window.setInterval(() => {
+        recordingTime++;
+        timerDisplay.textContent = formatTime(recordingTime);
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    // Recording functions
+    async function startRecording() {
+      try {
+        errorAlert.classList.add('hidden');
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        let mimeType = 'audio/webm';
+        if (currentMode === 'apple') {
+          const appleMimes = ['audio/mp4', 'audio/aac', 'audio/wav'];
+          mimeType = appleMimes.find(type => MediaRecorder.isTypeSupported(type)) || 'audio/webm';
+        } else {
+          const globeMimes = ['audio/webm', 'audio/ogg', 'audio/wav'];
+          mimeType = globeMimes.find(type => MediaRecorder.isTypeSupported(type)) || 'audio/webm';
+        }
+        
+        mediaRecorder = new MediaRecorder(audioStream, { mimeType });
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunks, { type: mediaRecorder?.mimeType });
+          if (audioURL) URL.revokeObjectURL(audioURL);
+          audioURL = URL.createObjectURL(audioBlob);
+          
+          // Save to mode state
+          modeStates[currentMode].audioURL = audioURL;
+          modeStates[currentMode].recordingTime = recordingTime;
+
+          isRecording = false;
+          updateUI();
+          
+          if (audioStream) {
+            audioStream.getTracks().forEach(track => track.stop());
+            audioStream = null;
+          }
+
+          if (autoPlayAfterStop) {
+            autoPlayAfterStop = false;
+            togglePlayback();
+          }
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+        startTimer();
+        updateUI();
+      } catch (err) {
+        console.error('Microphone access error:', err);
+        errorText.textContent = 'Could not access microphone. Please ensure permissions are granted.';
+        errorAlert.classList.remove('hidden');
+        isRecording = false;
+        updateUI();
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        stopTimer();
+      }
+    }
+
+    // Playback functions
+    function togglePlayback() {
+      if (!audioURL) return;
+      
+      if (isPlaying) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        isPlaying = false;
+      } else {
+        audioPlayer.play().catch(e => {
+          console.error("Playback failed:", e);
+          isPlaying = false;
+          updateUI();
+        });
+        isPlaying = true;
+      }
+      updateUI();
+    }
+
+    // Event Listeners
+    recordBtn.addEventListener('click', () => {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        if (audioURL) {
+          URL.revokeObjectURL(audioURL);
+          audioURL = null;
+          modeStates[currentMode].audioURL = null;
+          audioPlayer.src = '';
+        }
+        startRecording();
+      }
+    });
+
+    playBtn.addEventListener('click', () => {
+      if (isRecording) {
+        if (currentMode === 'globe') {
+          autoPlayAfterStop = true;
+          stopRecording();
+        }
+      } else if (audioURL) {
+        togglePlayback();
+      }
+    });
+
+    audioPlayer.addEventListener('ended', () => {
+      isPlaying = false;
+      updateUI();
+    });
+
+    // Mode Switching
+    function setMode(mode) {
+      if (mode === currentMode) return;
+
+      // Stop current actions if recording
+      if (isRecording) {
+        stopRecording();
+      }
+      if (isPlaying) {
+        audioPlayer.pause();
+        isPlaying = false;
+      }
+
+      // Switch mode
+      currentMode = mode;
+      
+      // Update UI classes
+      navGlobe.classList.toggle('active', mode === 'globe');
+      navApple.classList.toggle('active', mode === 'apple');
+
+      // Restore state from modeStates
+      audioURL = modeStates[mode].audioURL;
+      recordingTime = modeStates[mode].recordingTime;
+      
+      if (audioURL) {
+        audioPlayer.src = audioURL;
+      } else {
+        audioPlayer.src = '';
+      }
+
+      updateUI();
+    }
+
+    navGlobe.addEventListener('click', () => setMode('globe'));
+    navApple.addEventListener('click', () => setMode('apple'));
+
+    // Initial UI sync
+    updateUI();
+  </script>
 </body>
 </html>
