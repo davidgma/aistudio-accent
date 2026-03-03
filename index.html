@@ -361,6 +361,21 @@
     navGlobe.addEventListener('click', () => setMode('globe'));
     navApple.addEventListener('click', () => setMode('apple'));
 
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+      
+      // Record shortcuts: s, d, f
+      if (['s', 'd', 'f'].includes(key)) {
+        recordBtn.click();
+      }
+      
+      // Play shortcuts: j, k, l
+      if (['j', 'k', 'l'].includes(key)) {
+        playBtn.click();
+      }
+    });
+
     // Initial UI sync
     updateUI();
   </script>
