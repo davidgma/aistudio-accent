@@ -365,13 +365,13 @@
     window.addEventListener('keydown', (e) => {
       const key = e.key.toLowerCase();
       
-      // Record shortcuts: s, d, f
-      if (['s', 'd', 'f'].includes(key)) {
+      // Record shortcuts: d, j
+      if (['d', 'j'].includes(key)) {
         recordBtn.click();
       }
       
-      // Play shortcuts: j, k, l
-      if (['j', 'k', 'l'].includes(key)) {
+      // Play shortcuts: f, k
+      if (['f', 'k'].includes(key)) {
         playBtn.click();
       }
     });
