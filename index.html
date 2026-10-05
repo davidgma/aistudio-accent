@@ -166,7 +166,7 @@
         warmSwitchTrack.classList.add('bg-amber-500');
         warmSwitchThumb.classList.remove('translate-x-0');
         warmSwitchThumb.classList.add('translate-x-3.5');
-        warmToggleBtn.title = "Warm stream: ON (Instant recording, active mic in background)";
+        warmToggleBtn.title = "Warm stream: ON (Instant recording, active mic in background) [Shortcut: L]";
       } else {
         warmIcon.classList.remove('text-amber-400');
         warmIcon.classList.add('text-gray-500');
@@ -174,7 +174,7 @@
         warmSwitchTrack.classList.add('bg-gray-700');
         warmSwitchThumb.classList.remove('translate-x-3.5');
         warmSwitchThumb.classList.add('translate-x-0');
-        warmToggleBtn.title = "Warm stream: OFF (Microphone released when idle)";
+        warmToggleBtn.title = "Warm stream: OFF (Microphone released when idle) [Shortcut: L]";
       }
     }
 
@@ -575,7 +575,7 @@
     navGlobe.addEventListener('click', () => setMode('globe'));
     navApple.addEventListener('click', () => setMode('apple'));
 
-    // Keyboard Shortcuts (d/j = record, f/k = play)
+    // Keyboard Shortcuts (d/j = record, f/k = play, l = toggle warm mode)
     window.addEventListener('keydown', (e) => {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
         return;
@@ -592,6 +592,12 @@
       if (['f', 'k'].includes(key)) {
         e.preventDefault();
         playBtn.click();
+      }
+
+      // Warm toggle shortcut: l
+      if (key === 'l') {
+        e.preventDefault();
+        warmToggleBtn.click();
       }
     });
 
