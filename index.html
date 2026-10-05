@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Voice Recorder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙️</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #111827; /* bg-gray-900 */
+    }
+    
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .backdrop-blur-sm {
+      backdrop-filter: blur(4px);
+    }
+
+    .nav-item {
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      transition: all 0.3s;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+
+    .nav-item.active {
+      color: #ef4444 !important;
+      background-color: rgba(239, 68, 68, 0.1);
+      box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.3);
+    }
+
+    .nav-item:not(.active):hover {
+      background-color: #1f2937; /* bg-gray-800 */
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white">
+  <div id="app" class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-md mx-auto">
+      
+      <!-- Navbar -->
+      <nav class="flex items-center justify-center space-x-4 mb-6 bg-gray-800/30 p-2 rounded-2xl border border-gray-700/50 backdrop-blur-sm">
+        <div id="nav-globe" class="nav-item active" title="Desktop/Android Mode">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+          </svg>
+        </div>
+        <div id="nav-apple" class="nav-item" title="iPad Mode">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.05 20.28c-.98.95-2.05 1.61-3.22 1.61-1.14 0-1.53-.67-2.83-.67-1.3 0-1.74.67-2.83.67-1.17 0-2.24-.66-3.22-1.61-2.02-1.96-3.5-5.68-3.5-8.86 0-3.18 1.48-6.9 3.5-8.86.98-.95 2.05-1.61 3.22-1.61 1.14 0 1.53.67 2.83.67 1.3 0 1.74-.67 2.83-.67 1.17 0 2.24.66 3.22 1.61 2.02 1.96 3.5 5.68 3.5 8.86 0 3.18-1.48 6.9-3.5 8.86zm-5.05-16.28c0-1.1.89-2 2-2s2 .9 2 2-.89 2-2 2-2-.9-2-2z"/>
+          </svg>
+        </div>
+
+        <div class="h-6 w-px bg-gray-700/60 mx-1"></div>
+
+        <!-- Warm Stream Toggle -->
+        <button id="warm-toggle-btn" type="button" class="flex items-center space-x-2 px-3 py-1.5 rounded-xl hover:bg-gray-800/60 transition-all cursor-pointer border border-gray-700/40 focus:outline-none" title="Warm stream: ON (Instant recording, active mic in background)">
+          <svg id="warm-icon" class="w-5 h-5 text-amber-400 transition-colors" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.527.82-1.17 2.012-1.428 2.656-.27.674-.537 1.456-.638 2.158-.08.558-.025 1.146.166 1.677a3.003 3.003 0 01-1.344-.75 4.966 4.966 0 01-1.026-1.542 1 1 0 00-1.854.743c.47 1.175 1.25 2.27 2.26 3.044.257.198.54.37.842.515C8.07 13.064 8 13.524 8 14c0 2.21 1.79 4 4 4s4-1.79 4-4c0-1.576-.796-3.036-2.023-3.896-.28-.196-.583-.36-.902-.489.155-.705.426-1.498.718-2.228.318-.795.69-1.573.948-2.262.164-.44.254-.87.218-1.28a2.97 2.97 0 00-.564-1.292z" clip-rule="evenodd" />
+          </svg>
+          <span class="text-xs font-semibold text-gray-300 select-none">Warm</span>
+          <div id="warm-switch-track" class="w-8 h-4.5 bg-amber-500 rounded-full relative transition-colors duration-200 flex items-center p-0.5">
+            <div id="warm-switch-thumb" class="w-3.5 h-3.5 bg-white rounded-full transition-transform duration-200 shadow transform translate-x-3.5"></div>
+          </div>
+        </button>
+      </nav>
+
+      <main id="main-recorder" class="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-2xl p-6 sm:p-8 border border-gray-700">
+        <!-- Display Area -->
+        <div id="display-area" class="h-24 flex items-center justify-center bg-gray-900 rounded-lg mb-6">
+          <p id="status-text" class="text-gray-500 text-lg">Ready to record</p>
+          <div id="recording-indicator" class="hidden flex items-center space-x-3">
+            <span class="relative flex h-4 w-4">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
+            </span>
+            <span id="timer-display" class="text-3xl font-mono tracking-wider text-red-400">00:00</span>
+          </div>
+          <audio id="audio-player" controls class="hidden w-full"></audio>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-alert" class="hidden bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg relative mb-6" role="alert">
+          <strong class="font-bold">Error: </strong>
+          <span id="error-text" class="block sm:inline"></span>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls-container" class="flex items-center justify-center space-x-4">
+          <!-- Record/Stop Button -->
+          <button id="record-btn" class="flex items-center justify-center w-20 h-20 rounded-full bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg focus:outline-none focus:ring-4 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 ease-in-out transform hover:scale-105">
+            <svg id="mic-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path></svg>
+            <svg id="stop-icon" class="hidden w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd"></path></svg>
+          </button>
+
+          <!-- Play/Stop Playback Button -->
+          <button id="play-btn" disabled class="flex items-center justify-center w-16 h-16 rounded-full bg-gray-700 text-cyan-400 hover:bg-gray-600 focus:outline-none focus:ring-4 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-500">
+            <svg id="play-icon" class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+            <svg id="pause-icon" class="hidden h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+          </button>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script type="module">
+    import fixWebmDuration from 'fix-webm-duration';
+
+    // State variables
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let audioStream = null;
+    let timerInterval = null;
+    let recordingTime = 0;
+    let recordingStartTime = 0;
+    let isRecording = false;
+    let isStartingRecording = false;
+    let isPlaying = false;
+    let audioURL = null;
+    let currentMode = 'globe'; // 'globe' or 'apple'
+    let autoPlayAfterStop = false;
+
+    // Mode-specific state persistence
+    const modeStates = {
+      globe: { audioURL: null, recordingTime: 0 },
+      apple: { audioURL: null, recordingTime: 0 }
+    };
+
+    // Warm Stream State (persisted in localStorage, defaults to false)
+    let isWarmStreamEnabled = localStorage.getItem('voice_recorder_warm_stream') === 'true';
+
+    // DOM Elements
+    const recordBtn = document.getElementById('record-btn');
+    const playBtn = document.getElementById('play-btn');
+    const timerDisplay = document.getElementById('timer-display');
+    const statusText = document.getElementById('status-text');
+    const recordingIndicator = document.getElementById('recording-indicator');
+    const audioPlayer = document.getElementById('audio-player');
+    const errorAlert = document.getElementById('error-alert');
+    const errorText = document.getElementById('error-text');
+    const micIcon = document.getElementById('mic-icon');
+    const stopIcon = document.getElementById('stop-icon');
+    const playIcon = document.getElementById('play-icon');
+    const pauseIcon = document.getElementById('pause-icon');
+    const navGlobe = document.getElementById('nav-globe');
+    const navApple = document.getElementById('nav-apple');
+    const warmToggleBtn = document.getElementById('warm-toggle-btn');
+    const warmIcon = document.getElementById('warm-icon');
+    const warmSwitchTrack = document.getElementById('warm-switch-track');
+    const warmSwitchThumb = document.getElementById('warm-switch-thumb');
+
+    function updateWarmToggleUI() {
+      if (isWarmStreamEnabled) {
+        warmIcon.classList.remove('text-gray-500');
+        warmIcon.classList.add('text-amber-400');
+        warmSwitchTrack.classList.remove('bg-gray-700');
+        warmSwitchTrack.classList.add('bg-amber-500');
+        warmSwitchThumb.classList.remove('translate-x-0');
+        warmSwitchThumb.classList.add('translate-x-3.5');
+        warmToggleBtn.title = "Warm stream: ON (Instant recording, active mic in background)";
+      } else {
+        warmIcon.classList.remove('text-amber-400');
+        warmIcon.classList.add('text-gray-500');
+        warmSwitchTrack.classList.remove('bg-amber-500');
+        warmSwitchTrack.classList.add('bg-gray-700');
+        warmSwitchThumb.classList.remove('translate-x-3.5');
+        warmSwitchThumb.classList.add('translate-x-0');
+        warmToggleBtn.title = "Warm stream: OFF (Microphone released when idle)";
+      }
+    }
+
+    warmToggleBtn.addEventListener('click', () => {
+      isWarmStreamEnabled = !isWarmStreamEnabled;
+      localStorage.setItem('voice_recorder_warm_stream', isWarmStreamEnabled ? 'true' : 'false');
+      updateWarmToggleUI();
+
+      if (isWarmStreamEnabled) {
+        if (currentMode === 'globe' && !isRecording) {
+          getOrCreateAudioStream().then(stream => {
+            stream.getAudioTracks().forEach(t => { t.enabled = false; });
+          }).catch(e => console.warn('Could not warm stream:', e));
+        }
+      } else {
+        if (!isRecording && audioStream) {
+          audioStream.getTracks().forEach(track => track.stop());
+          audioStream = null;
+        }
+      }
+    });
+
+    // Helper: Format time (MM:SS)
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Helper: Update UI state
+    function updateUI() {
+      // Record Button
+      if (isRecording) {
+        recordBtn.classList.remove('bg-cyan-500', 'hover:bg-cyan-600');
+        recordBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+        micIcon.classList.add('hidden');
+        stopIcon.classList.remove('hidden');
+      } else {
+        recordBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        recordBtn.classList.add('bg-cyan-500', 'hover:bg-cyan-600');
+        micIcon.classList.remove('hidden');
+        stopIcon.classList.add('hidden');
+      }
+
+      // Play Button
+      if (currentMode === 'globe') {
+        playBtn.disabled = !audioURL && !isRecording;
+      } else {
+        playBtn.disabled = !audioURL || isRecording;
+      }
+
+      if (isPlaying) {
+        playIcon.classList.add('hidden');
+        pauseIcon.classList.remove('hidden');
+      } else {
+        playIcon.classList.remove('hidden');
+        pauseIcon.classList.add('hidden');
+      }
+
+      // Display Area
+      if (isRecording) {
+        statusText.classList.add('hidden');
+        recordingIndicator.classList.remove('hidden');
+        audioPlayer.classList.add('hidden');
+      } else if (audioURL) {
+        statusText.classList.add('hidden');
+        recordingIndicator.classList.add('hidden');
+        audioPlayer.classList.remove('hidden');
+        if (audioPlayer.src !== audioURL) {
+          audioPlayer.src = audioURL;
+          audioPlayer.preload = 'auto';
+          audioPlayer.load();
+        }
+      } else {
+        statusText.classList.remove('hidden');
+        recordingIndicator.classList.add('hidden');
+        audioPlayer.classList.add('hidden');
+        statusText.textContent = 'Ready to record';
+      }
+    }
+
+    // High precision timer functions
+    function startTimer() {
+      recordingStartTime = performance.now();
+      recordingTime = 0;
+      timerDisplay.textContent = '00:00';
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = window.setInterval(() => {
+        recordingTime = Math.floor((performance.now() - recordingStartTime) / 1000);
+        timerDisplay.textContent = formatTime(recordingTime);
+      }, 250);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    // Audio stream management (re-use and pre-warm to eliminate record lag and driver switching stutter)
+    async function getOrCreateAudioStream() {
+      if (currentMode === 'globe' && isWarmStreamEnabled && audioStream && audioStream.active) {
+        const tracks = audioStream.getAudioTracks();
+        if (tracks.length > 0 && tracks[0].readyState === 'live') {
+          tracks.forEach(track => { track.enabled = true; });
+          return audioStream;
+        }
+      }
+
+      // Voice-optimized constraints to reduce hardware latency
+      const constraints = {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false
+      };
+
+      try {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
+      } catch {
+        audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      return audioStream;
+    }
+
+    function releaseOrMuteMic() {
+      if (!audioStream) return;
+      if (currentMode === 'apple' || !isWarmStreamEnabled) {
+        // On iOS/iPad OR when warm stream is OFF, release mic stream completely so tab indicator turns off
+        audioStream.getTracks().forEach(track => track.stop());
+        audioStream = null;
+        if (navigator.audioSession) {
+          try {
+            navigator.audioSession.type = 'playback';
+          } catch (e) {}
+        }
+      } else {
+        // On Desktop/Android when warm stream is ON, mute tracks without destroying stream
+        // This avoids audio driver reset glitches (causing stutter on immediate playback)
+        // and eliminates latency when starting subsequent recordings
+        audioStream.getAudioTracks().forEach(track => {
+          track.enabled = false;
+        });
+      }
+    }
+
+    // Pre-warm microphone in Globe mode if permission is already granted and warm stream is enabled
+    function checkAndPrewarmMic() {
+      if (currentMode !== 'globe' || !isWarmStreamEnabled || audioStream) return;
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'microphone' }).then(perm => {
+          if (perm.state === 'granted') {
+            getOrCreateAudioStream().then(stream => {
+              stream.getAudioTracks().forEach(t => { t.enabled = false; });
+            }).catch(() => {});
+          }
+        }).catch(() => {});
+      }
+    }
+    checkAndPrewarmMic();
+
+    const onFirstUserGesture = () => {
+      window.removeEventListener('pointerdown', onFirstUserGesture);
+      window.removeEventListener('keydown', onFirstUserGesture);
+      checkAndPrewarmMic();
+    };
+    window.addEventListener('pointerdown', onFirstUserGesture, { once: true });
+    window.addEventListener('keydown', onFirstUserGesture, { once: true });
+
+    // Recording functions
+    async function startRecording() {
+      if (isRecording || isStartingRecording) return;
+      isStartingRecording = true;
+      errorAlert.classList.add('hidden');
+
+      try {
+        if (!audioStream || !audioStream.active) {
+          statusText.textContent = 'Connecting microphone...';
+        }
+
+        const stream = await getOrCreateAudioStream();
+        
+        let mimeType = 'audio/webm';
+        if (currentMode === 'apple') {
+          const appleMimes = ['audio/mp4', 'audio/aac', 'audio/wav'];
+          mimeType = appleMimes.find(type => MediaRecorder.isTypeSupported(type)) || 'audio/webm';
+        } else {
+          const globeMimes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/wav'];
+          mimeType = globeMimes.find(type => MediaRecorder.isTypeSupported(type)) || 'audio/webm';
+        }
+        
+        mediaRecorder = new MediaRecorder(stream, { mimeType });
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          stopTimer();
+          const durationMs = Math.max(100, Math.round(performance.now() - recordingStartTime));
+          const rawBlob = new Blob(audioChunks, { type: mediaRecorder?.mimeType || mimeType });
+          
+          // Inject missing duration into WebM header to eliminate player stutter and premature halt
+          let finalBlob = rawBlob;
+          if (rawBlob.type.includes('webm')) {
+            try {
+              finalBlob = await fixWebmDuration(rawBlob, durationMs);
+            } catch (err) {
+              console.warn("Could not patch WebM duration:", err);
+              finalBlob = rawBlob;
+            }
+          }
+
+          if (audioURL) {
+            URL.revokeObjectURL(audioURL);
+          }
+          audioURL = URL.createObjectURL(finalBlob);
+          
+          // Save to mode state
+          modeStates[currentMode].audioURL = audioURL;
+          modeStates[currentMode].recordingTime = recordingTime;
+
+          isRecording = false;
+          releaseOrMuteMic();
+          updateUI();
+
+          // Preload audio so the decoder is primed before playback starts
+          audioPlayer.src = audioURL;
+          audioPlayer.preload = 'auto';
+          audioPlayer.load();
+
+          if (autoPlayAfterStop) {
+            autoPlayAfterStop = false;
+            playAudio();
+          }
+        };
+
+        // Start recording with 100ms timeslice to ensure continuous chunk buffering
+        mediaRecorder.start(100);
+        isRecording = true;
+        isStartingRecording = false;
+        startTimer();
+        updateUI();
+      } catch (err) {
+        console.error('Microphone access error:', err);
+        errorText.textContent = 'Could not access microphone. Please ensure permissions are granted.';
+        errorAlert.classList.remove('hidden');
+        isRecording = false;
+        isStartingRecording = false;
+        updateUI();
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        stopTimer();
+      }
+    }
+
+    // Playback functions
+    function playAudio() {
+      if (!audioURL) return;
+
+      const executePlay = () => {
+        audioPlayer.currentTime = 0;
+        const playPromise = audioPlayer.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            isPlaying = true;
+            updateUI();
+          }).catch(e => {
+            console.error("Playback failed:", e);
+            isPlaying = false;
+            updateUI();
+          });
+        }
+      };
+
+      // If audio element has already buffered enough data, play immediately
+      if (audioPlayer.readyState >= 2) {
+        executePlay();
+      } else {
+        // Wait until canplay event fires so the first playback never stutters or falters
+        const onCanPlay = () => {
+          audioPlayer.removeEventListener('canplay', onCanPlay);
+          executePlay();
+        };
+        audioPlayer.addEventListener('canplay', onCanPlay, { once: true });
+        audioPlayer.load();
+      }
+    }
+
+    function togglePlayback() {
+      if (!audioURL) return;
+      
+      if (isPlaying) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        isPlaying = false;
+        updateUI();
+      } else {
+        playAudio();
+      }
+    }
+
+    // Event Listeners
+    recordBtn.addEventListener('click', () => {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        if (audioURL) {
+          URL.revokeObjectURL(audioURL);
+          audioURL = null;
+          modeStates[currentMode].audioURL = null;
+          modeStates[currentMode].recordingTime = 0;
+          audioPlayer.src = '';
+        }
+        startRecording();
+      }
+    });
+
+    playBtn.addEventListener('click', () => {
+      if (isRecording) {
+        if (currentMode === 'globe') {
+          autoPlayAfterStop = true;
+          stopRecording();
+        }
+      } else if (audioURL) {
+        togglePlayback();
+      }
+    });
+
+    audioPlayer.addEventListener('ended', () => {
+      isPlaying = false;
+      updateUI();
+    });
+
+    audioPlayer.addEventListener('pause', () => {
+      if (!audioPlayer.seeking) {
+        isPlaying = false;
+        updateUI();
+      }
+    });
+
+    audioPlayer.addEventListener('playing', () => {
+      isPlaying = true;
+      updateUI();
+    });
+
+    // Mode Switching
+    function setMode(mode) {
+      if (mode === currentMode) return;
+
+      // Stop current actions if recording
+      if (isRecording) {
+        stopRecording();
+      }
+      if (isPlaying) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        isPlaying = false;
+      }
+
+      // Switch mode
+      currentMode = mode;
+      
+      // Update UI classes
+      navGlobe.classList.toggle('active', mode === 'globe');
+      navApple.classList.toggle('active', mode === 'apple');
+
+      // If switching to apple mode or if warm stream is disabled, release mic stream so audio session resets cleanly
+      if ((mode === 'apple' || !isWarmStreamEnabled) && audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
+        audioStream = null;
+      } else if (mode === 'globe' && isWarmStreamEnabled && !audioStream) {
+        checkAndPrewarmMic();
+      }
+
+      // Restore state from modeStates
+      audioURL = modeStates[mode].audioURL;
+      recordingTime = modeStates[mode].recordingTime;
+      
+      if (audioURL) {
+        audioPlayer.src = audioURL;
+        audioPlayer.preload = 'auto';
+        audioPlayer.load();
+      } else {
+        audioPlayer.src = '';
+      }
+
+      updateUI();
+    }
+
+    navGlobe.addEventListener('click', () => setMode('globe'));
+    navApple.addEventListener('click', () => setMode('apple'));
+
+    // Keyboard Shortcuts (d/j = record, f/k = play)
+    window.addEventListener('keydown', (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+        return;
+      }
+      const key = e.key.toLowerCase();
+      
+      // Record shortcuts: d, j
+      if (['d', 'j'].includes(key)) {
+        e.preventDefault();
+        recordBtn.click();
+      }
+      
+      // Play shortcuts: f, k
+      if (['f', 'k'].includes(key)) {
+        e.preventDefault();
+        playBtn.click();
+      }
+    });
+
+    // Clean teardown on tab close
+    window.addEventListener('beforeunload', () => {
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
+      }
+    });
+
+    // Initial UI sync
+    updateWarmToggleUI();
+    updateUI();
+  </script>
+</body>
+</html>
