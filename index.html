@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙️</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fix-webm-duration@1.0.6/fix-webm-duration.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
     
@@ -112,8 +113,7 @@
       </main>
     </div>
   </div>
-  <script type="module">
-    import fixWebmDuration from 'fix-webm-duration';
+  <script>
 
     // State variables
     let mediaRecorder = null;
@@ -382,9 +382,9 @@
           
           // Inject missing duration into WebM header to eliminate player stutter and premature halt
           let finalBlob = rawBlob;
-          if (rawBlob.type.includes('webm')) {
+          if (rawBlob.type.includes('webm') && typeof window.ysFixWebmDuration === 'function') {
             try {
-              finalBlob = await fixWebmDuration(rawBlob, durationMs);
+              finalBlob = await window.ysFixWebmDuration(rawBlob, durationMs);
             } catch (err) {
               console.warn("Could not patch WebM duration:", err);
               finalBlob = rawBlob;
